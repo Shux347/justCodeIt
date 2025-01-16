@@ -1,7 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
+from database import db
 from datetime import datetime
-
-db = SQLAlchemy()
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -21,11 +19,12 @@ class User(db.Model):
         else:
             raise ValueError("Insufficient vouchers")
 
+
 class Product(db.Model):
     __tablename__ = 'products'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Integer, nullable=False)  # Price in vouchers
     quantity = db.Column(db.Integer, default=0)
 
     def update_stock(self, sold_quantity):
@@ -34,6 +33,7 @@ class Product(db.Model):
         else:
             raise ValueError("Insufficient stock")
 
+
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
@@ -41,6 +41,7 @@ class Order(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     order_date = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 class VoucherTransaction(db.Model):
     __tablename__ = 'voucher_transactions'
