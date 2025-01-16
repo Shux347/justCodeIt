@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory
 import os
 
-app = Flask(__name__, static_folder='build')
+app = Flask(__name__, static_folder='frontend/build')
 app.config.from_object('config.Config')
 
 # Initialize the database
