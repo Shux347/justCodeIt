@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MWH Mini-Mart</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      margin: 10px 0;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #output {
+      margin-top: 20px;
+    }
+    .product {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>MWH Mini-Mart</h1>
+
+  <button onclick="listProducts()">List Products</button>
+  <button onclick="addProduct()">Add Product</button>
+  <button onclick="placeOrder()">Place Order</button>
+
+  <div id="output"></div>
+
+  <script>
+    const BASE_URL = 'http://127.0.0.1:5000'; // Flask backend URL
+
+    // List Products
+    async function listProducts() {
+      try {
+        const response = await fetch(`${BASE_URL}/products/list`);
+        const products = await response.json();
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerHTML = '<h2>Products</h2>';
+        products.forEach(product => {
+          const productDiv = document.createElement('div');
+          productDiv.className = 'product';
+          productDiv.innerHTML = `
+            <strong>${product.name}</strong><br>
+            Price: ${product.price} vouchers<br>
+            Quantity: ${product.quantity}
+          `;
+          outputDiv.appendChild(productDiv);
+        });
+      } catch (error) {
+        console.error('Error listing products:', error);
+        document.getElementById('output').innerText = 'Error listing products.';
+      }
+    }
+
+    // Add Product
+    async function addProduct() {
+      const newProduct = {
+        name: 'Test Product',
+        price: 10,
+        quantity: 50
+      };
+      try {
+        const response = await fetch(`${BASE_URL}/products/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProduct)
+        });
+        const result = await response.json();
+        document.getElementById('output').innerText = result.message;
+      } catch (error) {
+        console.error('Error adding product:', error);
+        document.getElementById('output').innerText = 'Error adding product.';
+      }
+    }
+
+    // Place Order
+    async function placeOrder() {
+      const newOrder = {
+        user_id: 1, // Replace with a valid user ID from your database
+        product_id: 1, // Replace with a valid product ID from your database
+        quantity: 2
+      };
+      try {
+        const response = await fetch(`${BASE_URL}/orders/place`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder)
+        });
+        const result = await response.json();
+        document.getElementById('output').innerText = result.message;
+      } catch (error) {
+        console.error('Error placing order:', error);
+        document.getElementById('output').innerText = 'Error placing order.';
+      }
+    }
+  </script>
+</body>
+</html>
