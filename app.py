@@ -59,6 +59,8 @@ def login():
                 'role': user.role,
                 'voucher_balance': user.voucher_balance,
             }
+            if user.role == "admin":
+                return redirect(url_for('admin_page'))
             return redirect(url_for('profile'))
         else:
             return render_template('login.html', error="Invalid email or password.")
@@ -81,6 +83,20 @@ def catalogue():
     from models import Product
     products = Product.query.all()
     return render_template('catalogue.html', products=products)
+
+@app.route('/admin')
+def admin_page():
+    # Check if the user is logged in
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    # Check if the logged-in user is an admin
+    user = session['user']
+    if user['role'] != 'admin':
+        return render_template('error.html', message="Access denied. Admins only.")
+
+    # Render the admin-only page
+    return render_template('admin.html', user=user)
 
 if __name__ == '__main__':
     app.run(debug=True)
