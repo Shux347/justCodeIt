@@ -1,17 +1,45 @@
 from flask import Blueprint, request, jsonify
-from models import db, User
+from database import db
+from models import User
 
 user_bp = Blueprint('user_bp', __name__)
 
-@user_bp.route('/add', methods=['POST'])
-def add_user():
-    data = request.json
-    user = User(name=data['name'], email=data['email'], password=data['password'], role=data['role'])
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({"message": "User added successfully"}), 201
+@user_bp.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON data"}), 415
 
-@user_bp.route('/list', methods=['GET'])
-def list_users():
-    users = User.query.all()
-    return jsonify([{"id": u.id, "name": u.name, "email": u.email, "role": u.role, "voucher_balance": u.voucher_balance} for u in users])
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not name or not email or not password:
+        return jsonify({"error": "All fields are required"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "User with this email already exists"}), 400
+
+    new_user = User(name=name, email=email, password=password)  # Save the user in the database
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify({"message": "Account created successfully"}), 201
+
+@user_bp.route('/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email, password=password).first()  # Verify user credentials
+    if not user:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    return jsonify({
+        "message": "Login successful",
+        "user_id": user.id,
+        "name": user.name,
+        "role": user.role,
+        "voucher_balance": user.voucher_balance
+    })

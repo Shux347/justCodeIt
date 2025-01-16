@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Voucher Transactions</h1>
+<ul>
+    {% for transaction in transactions %}
+    <li>{{ transaction.transaction_type }}: {{ transaction.amount }} vouchers ({{ transaction.timestamp }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}

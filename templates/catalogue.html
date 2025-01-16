@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Product Catalogue</h1>
+<ul>
+    {% for product in products %}
+    <li>
+        <strong>{{ product.name }}</strong> - Price: {{ product.price }} vouchers - Stock: {{ product.quantity }}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

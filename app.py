@@ -1,28 +1,69 @@
-from flask import Flask, send_from_directory
-import os
-
-app = Flask(__name__, static_folder='frontend/build')
-app.config.from_object('config.Config')
-
-# Initialize the database
-from database import db, initialize_database
-initialize_database(app)
-
-# Register blueprints
+from flask import Flask, render_template, request, redirect, url_for, session
+from database import initialize_database
 from routes.product_routes import product_bp
 from routes.user_routes import user_bp
 from routes.order_routes import order_bp
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mwh_app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'your_secret_key'  # Needed for session management
+
+# Initialize the database
+initialize_database(app)
+
+# Register blueprints
 app.register_blueprint(product_bp, url_prefix='/products')
 app.register_blueprint(user_bp, url_prefix='/users')
 app.register_blueprint(order_bp, url_prefix='/orders')
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+@app.route('/')
+def home():
+    logged_in = 'user' in session
+    return render_template('index.html', logged_in=logged_in)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        from models import User
+        user = User.query.filter_by(email=email, password=password).first()
+        if user:
+            session['user'] = {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': user.role,
+                'voucher_balance': user.voucher_balance,
+            }
+            return redirect(url_for('profile'))
+        else:
+            return render_template('login.html', error="Invalid email or password.")
+    return render_template('login.html')
+
+@app.route('/signup', methods=['GET'])
+def signup_page():
+    logged_in = 'user' in session
+    return render_template('signup.html', logged_in=logged_in)
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('home'))
+
+@app.route('/profile')
+def profile():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    user = session['user']
+    return render_template('profile.html', user=user)
+
+@app.route('/catalogue')
+def catalogue():
+    from models import Product
+    products = Product.query.all()
+    return render_template('catalogue.html', products=products)
 
 if __name__ == '__main__':
     app.run(debug=True)
