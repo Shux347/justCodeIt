@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from database import initialize_database
+from models import User
+from database import db
 from routes.product_routes import product_bp
 from routes.user_routes import user_bp
 from routes.order_routes import order_bp
@@ -22,12 +24,32 @@ def home():
     logged_in = 'user' in session
     return render_template('index.html', logged_in=logged_in)
 
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+
+        # Check if the user already exists
+        if User.query.filter_by(email=email).first():
+            return render_template('signup.html', error="Email already exists.")
+
+        # Create a new user with plain-text password (not recommended for production)
+        new_user = User(name=name, email=email, password=password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect(url_for('login'))
+    return render_template('signup.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        from models import User
+
+        # Fetch the user from the database
         user = User.query.filter_by(email=email, password=password).first()
         if user:
             session['user'] = {
@@ -41,11 +63,6 @@ def login():
         else:
             return render_template('login.html', error="Invalid email or password.")
     return render_template('login.html')
-
-@app.route('/signup', methods=['GET'])
-def signup_page():
-    logged_in = 'user' in session
-    return render_template('signup.html', logged_in=logged_in)
 
 @app.route('/logout')
 def logout():

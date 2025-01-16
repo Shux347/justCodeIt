@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Create an Account</h1>
-<form id="signup-form" onsubmit="submitSignup(event)">
+
+<!-- Display error messages if any -->
+{% if error %}
+    <div class="error" style="color: red;">{{ error }}</div>
+{% endif %}
+
+<form action="{{ url_for('signup') }}" method="POST">
     <label for="name">Name:</label>
     <input type="text" id="name" name="name" placeholder="Full Name" required>
     
