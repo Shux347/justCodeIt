@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from database import initialize_database
-from models import User
+from models import User, Product
 from database import db
 from routes.product_routes import product_bp
 from routes.user_routes import user_bp
@@ -82,7 +82,14 @@ def profile():
 def catalogue():
     from models import Product
     products = Product.query.all()
-    return render_template('catalogue.html', products=products)
+    is_admin = False  # Default to False
+    
+    # Check if user session exists and if the user is an admin
+    if 'user' in session:
+        user = User.query.get(session['user']['id'])
+        is_admin = user.role == 'admin'
+    
+    return render_template('catalogue.html', products=products, is_admin=is_admin)
 
 @app.route('/admin')
 def admin_page():
@@ -100,3 +107,20 @@ def admin_page():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+@app.route('/add_product', methods=['POST'])
+def add_product():
+    if request.is_json:
+        data = request.get_json()  # Parses the JSON data sent to the server
+        name = data['name']
+        price = data['price']
+        quantity = data['quantity']
+
+        new_product = Product(name=name, price=price, quantity=quantity)
+        db.session.add(new_product)
+        db.session.commit()
+        flash('Product added successfully!')
+        return jsonify({'message': 'Product added successfully!'}), 200
+    else:
+        return jsonify({'error': 'Request must be JSON'}), 400

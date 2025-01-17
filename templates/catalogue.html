@@ -1,11 +1,85 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Product Catalogue</h1>
-<ul>
-    {% for product in products %}
-    <li>
-        <strong>{{ product.name }}</strong> - Price: {{ product.price }} vouchers - Stock: {{ product.quantity }}
-    </li>
-    {% endfor %}
-</ul>
-{% endblock %}
+
+{% if is_admin %}
+<!-- Trigger/Open The Modal -->
+<button id="openModal">Add a Product</button>
+<!-- The Modal -->
+<div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add a New Product</h2>
+        <form method="POST" action="{{ url_for('product_bp.add_product') }}" class="modal-form">
+            <!-- Include CSRF token field -->
+            {% if session.csrf_token %}
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Price (vouchers):</label>
+                <input type="number" id="price" name="price" required>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Stock Quantity:</label>
+                <input type="number" id="quantity" name="quantity" required>
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+
+
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.querySelector('.modal-form');
+
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();  // Prevent normal form submission
+
+                    var formData = {
+                        'name': document.getElementById('name').value,
+                        'price': document.getElementById('price').value,
+                        'quantity': document.getElementById('quantity').value
+                    };
+
+                    fetch("{{ url_for('product_bp.add_product') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)  // Convert form data to JSON string
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.message) {
+                                alert(data.message);  // Success message from server
+                                modal.style.display = 'none';  // Close modal on success
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                });
+
+                // Existing modal JavaScript here...
+            });
+        </script>
+
+
+    </div>
+    {% endif %}
+
+    <ul>
+        {% for product in products %}
+        <li>
+            <strong>{{ product.name }}</strong> - Price: {{ product.price }} vouchers - Stock: {{ product.quantity }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endblock %}
